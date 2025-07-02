@@ -1,5 +1,7 @@
 package com.sbeu.markdowneditor
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -18,7 +20,7 @@ class ViewMarkdownActivity : AppCompatActivity() {
         setContentView(binding.root)
         setupInsets()
 
-
+//        binding.textViewTitle.text = intent.getStringExtra(EXTRA_MARKDOWN_CONTENT)
     }
 
     private fun setupInsets() {
@@ -26,6 +28,16 @@ class ViewMarkdownActivity : AppCompatActivity() {
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
+        }
+    }
+
+    companion object {
+        const val EXTRA_MARKDOWN_CONTENT = "markdown_content"
+
+        fun newIntent(context: Context, markdownContent: String): Intent {
+            return Intent(context, ViewMarkdownActivity::class.java).apply {
+                putExtra(EXTRA_MARKDOWN_CONTENT, markdownContent)
+            }
         }
     }
 }
