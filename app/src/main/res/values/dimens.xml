@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="padding_large">16dp</dimen>
+    <dimen name="padding_medium">8dp</dimen>
+    <dimen name="padding_small">4dp</dimen>
+
+    <dimen name="text_size_paragraph">16sp</dimen>
+    <dimen name="text_size_h1">32sp</dimen>
+    <dimen name="text_size_h2">28sp</dimen>
+    <dimen name="text_size_h3">24sp</dimen>
+    <dimen name="text_size_h4">20sp</dimen>
+    <dimen name="text_size_h5">18sp</dimen>
+    <dimen name="text_size_h6">16sp</dimen>
+</resources>
