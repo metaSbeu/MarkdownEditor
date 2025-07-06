@@ -99,10 +99,11 @@
         app:singleSelection="true">
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/buttonExpense"
+            android:id="@+id/toggleButtonPreview"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
+            android:backgroundTint="@color/toggle_selector"
             android:checkable="true"
             android:checked="true"
             android:text="Превью"
@@ -110,12 +111,13 @@
             tools:ignore="VisualLintButtonSize" />
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/buttonIncome"
+            android:id="@+id/toggleButtonEdit"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
+            android:backgroundTint="@color/toggle_selector"
             android:checkable="true"
-            android:text="Редактирование"
+            android:text="Исходный код"
             app:cornerRadius="12dp"
             tools:ignore="VisualLintButtonSize" />
     </com.google.android.material.button.MaterialButtonToggleGroup>
@@ -132,6 +134,7 @@
             android:id="@+id/textViewContent"
             android:layout_width="wrap_content"
             android:layout_height="0dp"
+            android:visibility="gone"
             android:padding="8dp" />
 
     </ScrollView>
@@ -140,8 +143,7 @@
         android:id="@+id/rvPreview"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:padding="16dp"
-        android:visibility="gone"
+        android:visibility="visible"
         app:layout_constraintBottom_toTopOf="@id/buttonEdit"
         app:layout_constraintTop_toBottomOf="@+id/toggleGroup" />
 

@@ -2,53 +2,98 @@ package com.sbeu.markdowneditor
 
 import android.app.Application
 import android.content.ContentResolver
+import android.content.ContentValues
+import android.content.Context
 import android.net.Uri
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
+import android.util.Log
+import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.io.BufferedReader
+import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileOutputStream
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 
 class UploadViewModel(application: Application) : AndroidViewModel(application) {
-
-    private val _markdownContent = MutableLiveData<String>()
-    val markdownContent: LiveData<String> = _markdownContent
+    val markdownContent = MarkdownRepository.markdownContent
+    val currentFileUri = MarkdownRepository.currentFileUri
 
     private val contentResolver: ContentResolver = application.contentResolver
 
     fun loadMarkdownFromUri(uri: Uri) {
+        currentFileUri.value = uri
         CoroutineScope(Dispatchers.IO).launch {
-            val text = contentResolver.openInputStream(uri)?.use {
-                it.bufferedReader().use { reader -> reader.readText() }
-            } ?: ""
-            _markdownContent.postValue(text)
+            val text =
+                contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() } ?: ""
+            markdownContent.postValue(text)
         }
     }
 
-    fun loadMarkdownFromUrl(urlString: String) {
+    fun downloadMarkdownFileToDownloads(context: Context, urlString: String) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val url = URL(urlString)
-                val connection = url.openConnection() as HttpURLConnection
-                connection.requestMethod = "GET"
-                connection.connectTimeout = 5000
-                connection.readTimeout = 5000
+                val conn = url.openConnection() as HttpURLConnection
+                conn.requestMethod = "GET"
+                conn.connect()
 
-                val responseCode = connection.responseCode
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    val reader = BufferedReader(InputStreamReader(connection.inputStream))
-                    val content = reader.use { it.readText() }
-                    _markdownContent.postValue(content)
-                } else {
-                    _markdownContent.postValue("Ошибка загрузки: HTTP $responseCode")
+                val inputStream = conn.inputStream
+
+                val fileName = url.path.substringAfterLast('/').ifEmpty { "downloaded.md" }
+
+                var outputStream: FileOutputStream? = null
+                var fileUri: Uri? = null
+
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        val contentValues = ContentValues().apply {
+                            put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+                            put(MediaStore.MediaColumns.MIME_TYPE, "text/markdown")
+                            put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+                        }
+
+                        fileUri = contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+
+                        fileUri?.let { uri ->
+                            outputStream = contentResolver.openOutputStream(uri) as FileOutputStream?
+                        }
+
+                        if (outputStream == null) {
+                            throw Exception("Не удалось получить OutputStream для MediaStore URI.")
+                        }
+
+                    } else {
+                        val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                        if (!downloadsDir.exists()) downloadsDir.mkdirs()
+                        val file = File(downloadsDir, fileName)
+                        outputStream = FileOutputStream(file)
+                        fileUri = Uri.fromFile(file)
+                    }
+
+                    outputStream.use { output ->
+                        inputStream.copyTo(output)
+                    }
+
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "Файл сохранён в: ${fileUri?.path}", Toast.LENGTH_LONG).show()
+                    }
+
+                } finally {
+                    inputStream.close()
+                    outputStream?.close()
                 }
+
             } catch (e: Exception) {
-                _markdownContent.postValue("Ошибка загрузки: ${e.message}")
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Ошибка загрузки: ${e.message}", Toast.LENGTH_LONG).show()
+                }
             }
         }
     }

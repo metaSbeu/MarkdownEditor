@@ -3,10 +3,10 @@ package com.sbeu.markdowneditor
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.sbeu.markdowneditor.databinding.ActivityViewMarkdownBinding
 
 class ViewMarkdownActivity : AppCompatActivity() {
@@ -15,12 +15,15 @@ class ViewMarkdownActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         binding = ActivityViewMarkdownBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setupInsets()
 
-//        binding.textViewTitle.text = intent.getStringExtra(EXTRA_MARKDOWN_CONTENT)
+        val content = intent.getStringExtra(EXTRA_CONTENT) ?: ""
+        val elements = MarkdownParser.parse(content)
+
+        binding.recyclerView.layoutManager = LinearLayoutManager(this)
+        binding.recyclerView.adapter = MarkdownAdapter(elements)
     }
 
     private fun setupInsets() {
@@ -32,12 +35,10 @@ class ViewMarkdownActivity : AppCompatActivity() {
     }
 
     companion object {
-        const val EXTRA_MARKDOWN_CONTENT = "markdown_content"
-
-        fun newIntent(context: Context, markdownContent: String): Intent {
-            return Intent(context, ViewMarkdownActivity::class.java).apply {
-                putExtra(EXTRA_MARKDOWN_CONTENT, markdownContent)
+        private const val EXTRA_CONTENT = "EXTRA_CONTENT"
+        fun newIntent(context: Context, content: String) =
+            Intent(context, ViewMarkdownActivity::class.java).apply {
+                putExtra(EXTRA_CONTENT, content)
             }
-        }
     }
 }
